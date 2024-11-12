@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Cuaca</title>
+    <style>
+        /* Styling dasar halaman */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #faf3f5; /* Latar belakang pink pastel terang */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        /* Styling untuk kontainer utama */
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #d88aaf; /* Judul berwarna ungu pastel */
+            margin-bottom: 20px;
+        }
+
+        /* Data ringkasan */
+        .data-summary {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .data-summary div {
+            flex: 1;
+            padding: 15px;
+            background-color: #ffd1e8; /* Pink pastel untuk ringkasan data */
+            border-radius: 8px;
+            color: #a64482;
+            font-weight: bold;
+        }
+
+        /* Styling untuk tabel */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #e0f7ff; /* Tabel biru pastel */
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #b3e0ff;
+            text-align: center;
+        }
+
+        th {
+            background-color: #a6dff5; /* Biru pastel gelap */
+            color: #094067;
+        }
+
+        td {
+            color: #094067;
+        }
+
+        /* Grafik */
+        #myChart {
+            max-width: 100%;
+            margin: 20px auto;
+            height: 400px; /* Menambah tinggi grafik */
+        }
+
+        footer {
+            margin-top: 20px;
+            color: #a34db0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Cuaca</h1>
+        
+        <!-- Menampilkan Data Ringkasan -->
+        <div class="data-summary" id="data-summary"></div>
+
+        <!-- Grafik -->
+        <canvas id="myChart"></canvas>
+
+        <!-- Kontainer untuk Tabel Data -->
+        <div id="data-container"></div>
+
+        <footer>Data displayed from <strong>Weather API</strong></footer>
+    </div>
+
+    <!-- Menyertakan Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Mengambil data dari API
+        fetch("http://localhost/UTS_IFB309_2425_BB_152022155_Irna/get.php")
+            .then(response => response.json())
+            .then(data => {
+                // Menampilkan data ringkasan
+                let dataSummary = document.getElementById("data-summary");
+                let dataContainer = document.getElementById("data-container");
+                
+                dataSummary.innerHTML += `<div>Suhu Max: ${data.suhumax}°C</div>`;
+                dataSummary.innerHTML += `<div>Suhu Min: ${data.suhumin}°C</div>`;
+                dataSummary.innerHTML += `<div>Suhu Rata-rata: ${data.suhurata}°C</div>`;
+
+                // Menampilkan data cuaca dalam tabel
+                let tableHTML = `
+                    <h3 style="color:#a34db0;">Data Nilai Suhu Tertinggi</h3>
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Suhu (°C)</th>
+                            <th>Humidity (%)</th>
+                            <th>Lux</th>
+                            <th>Timestamp</th>
+                        </tr>
+                `;
+                data.nilai_suhu_max_humid_max.forEach(row => {
+                    tableHTML += `
+                        <tr>
+                            <td>${row.id}</td>
+                            <td>${row.suhu}</td>
+                            <td>${row.humid}</td>
+                            <td>${row.lux}</td>
+                            <td>${row.ts}</td>
+                        </tr>
+                    `;
+                });
+                tableHTML += `</table>`;
+                dataContainer.innerHTML = tableHTML;
+
+                // Menampilkan grafik untuk suhu tertinggi per bulan-tahun
+                const ctx = document.getElementById('myChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.mount_year_max.map(row => row.mount_years),
+                        datasets: [{
+                            label: 'Suhu Tertinggi per Bulan',
+                            data: data.nilai_suhu_max_humid_max.map(row => row.suhu),
+                            borderColor: '#d88aaf', /* Garis grafik ungu pastel */
+                            backgroundColor: 'rgba(255, 182, 193, 0.3)', /* Background grafik pink pastel */
+                            pointBackgroundColor: '#a86da5', /* Titik ungu pastel */
+                            pointBorderColor: '#a86da5', /* Border titik */
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: '#a34db0', /* Warna legend */
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Grafik Suhu Tertinggi per Bulan',
+                                color: '#a34db0',
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#a34db0' /* Warna sumbu x */
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#a34db0' /* Warna sumbu y */
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    </script>
+</body>
+</html>
